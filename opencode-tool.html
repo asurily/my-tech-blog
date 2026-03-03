@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宝藏AI编程工具OpenCode - 阿蒲的技术空间</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.8; color: #333; max-width: 800px; margin: 0 auto; padding: 40px 20px; background: #f5f5f5; }
+        article { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { font-size: 2em; margin-bottom: 20px; color: #1a1a1a; }
+        h2 { font-size: 1.5em; margin: 40px 0 20px; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h3 { font-size: 1.2em; margin: 25px 0 15px; color: #34495e; }
+        p { margin: 15px 0; }
+        ul, ol { margin: 15px 0 15px 30px; }
+        li { margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background: #3498db; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        blockquote { border-left: 4px solid #3498db; padding-left: 20px; margin: 20px 0; color: #666; font-style: italic; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; font-size: 0.9em; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 20px; border-radius: 8px; overflow-x: auto; margin: 20px 0; }
+        pre code { background: none; padding: 0; color: inherit; }
+        .meta { color: #888; font-size: 0.9em; margin-bottom: 30px; }
+        .tags { margin-top: 10px; }
+        .tag { display: inline-block; background: #3498db; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85em; margin-right: 8px; }
+        .back { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; }
+        .back:hover { text-decoration: underline; }
+        .highlight { background: #fff3cd; padding: 2px 6px; border-radius: 3px; }
+        @media (max-width: 600px) { body { padding: 20px 10px; } article { padding: 20px; } h1 { font-size: 1.5em; } h2 { font-size: 1.3em; } }
+    </style>
+</head>
+<body>
+    <article>
+        <a href="/index.html" class="back">← 返回首页</a>
+        <h1>🤖 宝藏AI编程工具OpenCode，可能是你最好的平替方案</h1>
+        <div class="meta">发布时间：2026-03-03 <div class="tags"><span class="tag">AI</span><span class="tag">工具</span><span class="tag">OpenCode</span></div></div>
+
+        <p>当下的 Vibe Coding 王者一定是 Claude Code，但是由于一些限制以及预算等问题，我们也还是需要一款可平替的 AI 工具，以备不时之需。</p>
+        <p>今天必须给大家安利一个宝藏 AI 编程工具——<strong>OpenCode</strong> ✨</p>
+
+        <h2>OpenCode 是什么？</h2>
+        <p>OpenCode 是由 Anomaly 公司开发并开源的 AI 编程代理工具，定位是 <span class="highlight">"你的AI编程团队"</span>。</p>
+
+        <h2>核心特性对比</h2>
+        <table>
+            <tr><th>特性</th><th>OpenCode</th><th>Claude Code</th><th>GitHub Copilot</th></tr>
+            <tr><td>开源性</td><td>100% 开源</td><td>闭源</td><td>闭源</td></tr>
+            <tr><td>多模型支持</td><td>任意提供商</td><td>仅Claude</td><td>仅OpenAI</td></tr>
+            <tr><td>LSP内置</td><td>开箱即用</td><td>需配置</td><td>需配置</td></tr>
+            <tr><td>TUI优先</td><td>专为终端设计</td><td>支持</td><td>桌面为主</td></tr>
+            <tr><td>多会话</td><td>原生支持</td><td>有限</td><td>不支持</td></tr>
+        </table>
+
+        <h2>为什么选择 OpenCode？</h2>
+        <h3>🔓 完全开源</h3>
+        <ul>
+            <li>100% 开源，代码透明可查</li>
+            <li>不绑定任何模型提供商</li>
+            <li>用 Claude、GPT、Gemini 都可以！</li>
+        </ul>
+
+        <h3>🛡️ 隐私安全</h3>
+        <ul>
+            <li>不存储你的代码和上下文数据</li>
+            <li>敏感项目也能安心用</li>
+        </ul>
+
+        <h3>💻 多端支持</h3>
+        <ul>
+            <li>终端界面（TUI）</li>
+            <li>桌面应用</li>
+            <li>IDE 插件</li>
+        </ul>
+
+        <h2>安装超简单</h2>
+        <p><strong>一键安装（推荐）</strong></p>
+        <pre><code>curl -fsSL https://opencode.ai/install | bash</code></pre>
+        <p><strong>或者用 npm</strong></p>
+        <pre><code>npm install -g opencode-ai</code></pre>
+
+        <h2>核心功能</h2>
+        <h3>1️⃣ 双代理模式</h3>
+        <ul>
+            <li><strong>Build 模式</strong>：默认模式，执行代码修改</li>
+            <li><strong>Plan 模式</strong>：只读分析，按 Tab 切换</li>
+        </ul>
+
+        <h3>2️⃣ 智能对话</h3>
+        <ul>
+            <li>解释代码：这段屎山代码在说一个什么功能？</li>
+            <li>添加功能：添加一个用户登录功能</li>
+        </ul>
+
+        <h3>3️⃣ 撤销/重做</h3>
+        <ul>
+            <li><code>/undo</code> - 撤销</li>
+            <li><code>/redo</code> - 重做</li>
+        </ul>
+
+        <h3>4️⃣ 共享协作</h3>
+        <p><code>/share</code> 一键分享会话链接</p>
+
+        <h2>使用小技巧</h2>
+        <ol>
+            <li>进入项目先运行 <code>/init</code>，让它学习你的代码结构</li>
+            <li>复杂功能先用 Plan 模式看计划，再切 Build 模式执行</li>
+            <li>多会话并行，同时处理多个任务</li>
+        </ol>
+
+        <h2>社区认可</h2>
+        <ul>
+            <li>⭐ <strong>100K+</strong> GitHub Stars</li>
+            <li>👥 <strong>700+</strong> 贡献者</li>
+            <li>👨‍💻 <strong>2.5M</strong> 月活开发者</li>
+        </ul>
+
+        <h2>配套资源</h2>
+        <ul>
+            <li><strong>Oh My OpenCode</strong>：Hephaestus 社区项目（有趣的小工具）</li>
+            <li><strong>Zen 模型包</strong>：经过验证的编程优化模型</li>
+        </ul>
+
+        <h2>最佳实践场景</h2>
+        <h3>场景1：接手陌生代码库</h3>
+        <ol>
+            <li>先用 Plan 模式探索</li>
+            <li>查看项目结构</li>
+            <li>理解关键依赖</li>
+        </ol>
+
+        <h3>场景2：添加复杂功能</h3>
+        <ol>
+            <li>切换 Plan 模式（按 Tab）</li>
+            <li>描述需求</li>
+            <li>查看计划，确认后切换 Build 执行</li>
+        </ol>
+
+        <h3>场景3：代码重构</h3>
+        <ol>
+            <li>让 OpenCode 分析</li>
+            <li>确认方案后执行</li>
+        </ol>
+
+        <h2>总结</h2>
+        <blockquote>OpenCode 就像给你的编程工作配了一个 24 小时待命<strong>初级程序员助理</strong>，而且<strong>完全免费开源</strong>！不管是解释代码、添加功能、还是重构项目，它都能帮你搞定 🙌</blockquote>
+    </article>
+</body>
+</html>

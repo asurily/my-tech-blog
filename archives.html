@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>归档 - 阿蒲的技术空间</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; min-height: 100vh; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; }
+        header h1 { font-size: 2em; margin-bottom: 10px; }
+        nav { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        nav ul { display: flex; justify-content: center; list-style: none; max-width: 800px; margin: 0 auto; padding: 0 20px; }
+        nav a { display: block; padding: 15px 25px; color: #333; text-decoration: none; font-weight: 500; transition: all 0.3s; }
+        nav a:hover { color: #667eea; background: #f8f9fa; }
+        main { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .archive-list { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; }
+        .archive-year { font-size: 1.5em; color: #667eea; margin: 30px 0 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .archive-year:first-child { margin-top: 0; }
+        .archive-item { padding: 10px 0; }
+        .archive-item a { color: #333; text-decoration: none; font-size: 1.1em; }
+        .archive-item a:hover { color: #667eea; }
+        .archive-date { color: #888; margin-left: 10px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <header><h1>📁 归档</h1></header>
+    <nav>
+        <ul>
+            <li><a href="/">首页</a></li>
+            <li><a href="/archives.html">归档</a></li>
+            <li><a href="/tags.html">标签</a></li>
+            <li><a href="/categories.html">分类</a></li>
+            <li><a href="/about.html">关于</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="archive-list">
+            <div class="archive-year">2026</div>
+            <div class="archive-item">
+                <a href="/opencode-tool.html">宝藏AI编程工具OpenCode</a>
+                <span class="archive-date">03-03</span>
+            </div>
+            <div class="archive-item">
+                <a href="/why-backend-ai-content-scarce.html">为什么后端AI内容这么少？真相了</a>
+                <span class="archive-date">03-03</span>
+            </div>
+            <div class="archive-item">
+                <a href="#">Hello World</a>
+                <span class="archive-date">03-03</span>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
