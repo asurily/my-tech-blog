@@ -3,543 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>深度理解 OpenClaw：架构、原理与实践指南 - 阿蒲的技术空间</title>
+    <title>硬核拆解 OpenClaw：你的私人 AI 助手 - 阿蒲的技术空间</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.8; color: #333; max-width: 800px; margin: 0 auto; padding: 40px 20px; background: #f5f5f5; }
         article { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { font-size: 2em; margin-bottom: 20px; color: #1a1a1a; }
-        h2 { font-size: 1.5em; margin: 40px 0 20px; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        h3 { font-size: 1.2em; margin: 25px 0 15px; color: #34495e; }
-        p { margin: 15px 0; }
-        ul, ol { margin: 15px 0 15px 30px; }
-        li { margin: 8px 0; }
-        pre { background: #2d2d2d; color: #f8f8f2; padding: 20px; border-radius: 8px; overflow-x: auto; margin: 20px 0; }
+        h1 { font-size: 1.8em; margin-bottom: 20px; color: #1a1a1a; }
+        h2 { font-size: 1.4em; margin: 35px 0 18px; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; }
+        h3 { font-size: 1.15em; margin: 22px 0 12px; color: #34495e; }
+        p { margin: 14px 0; }
+        ul, ol { margin: 14px 0 14px 28px; }
+        li { margin: 7px 0; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 18px; border-radius: 6px; overflow-x: auto; margin: 18px 0; font-size: 0.9em; }
         pre code { background: none; padding: 0; color: inherit; }
-        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: Consolas, monospace; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.9em; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: #3498db; color: white; }
-        blockquote { border-left: 4px solid #3498db; padding-left: 20px; margin: 20px 0; color: #666; }
-        .meta { color: #888; font-size: 0.9em; margin-bottom: 30px; }
-        .tags { margin-top: 10px; }
-        .tag { display: inline-block; background: #3498db; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.85em; margin-right: 8px; }
-        .back { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; }
+        blockquote { border-left: 4px solid #3498db; padding-left: 18px; margin: 18px 0; color: #666; font-style: italic; }
+        .meta { color: #888; font-size: 0.85em; margin-bottom: 25px; }
+        .back { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; font-weight: 500; }
+        .back:hover { text-decoration: underline; }
+        .highlight { background: #fff3cd; padding: 2px 6px; border-radius: 3px; }
     </style>
 </head>
 <body>
     <article>
         <a href="/index.html" class="back">← 返回首页</a>
-        <h1>深度理解 OpenClaw：架构、原理与实践指南</h1>
+        <h1>写在前面</h1>
 <blockquote>
-<p>OpenClaw 是一个开源的个人 AI 助手框架，它不仅仅是一个聊天工具，而是一个完整的 AI Agent 系统。本文从架构设计、核心模块、代码实现三个维度，带你深入理解 OpenClaw。</p>
+<p>作为一名程序员，你是否有过这些困惑？</p>
+<ul>
+<li>想让 AI 助手帮你处理工作，但不想把数据传到第三方云服务</li>
+<li>希望用一个 AI 助手，同时管理微信、Telegram、飞书等多个渠道</li>
+<li>想要深度定制 AI 的行为，但 ChatGPT 的 GPTs 限制太多</li>
+<li>想让 AI 记住你之前的对话，而不是每次都从头开始</li>
+</ul>
+</blockquote>
+<p>如果你有以上任意一个需求，这篇文章或许能给你一个不一样的答案。</p>
+<hr>
+<h1>OpenClaw 是什么？</h1>
+<p><strong>OpenClaw</strong> 是一个开源的<strong>个人 AI 助手框架</strong>，你可以把它理解为一个&quot;运行在你自己服务器上的 AI 助手&quot;。</p>
+<p>它不是另一个聊天机器人，而是一个<strong>可深度定制的 AI Agent 平台</strong>：</p>
+<ul>
+<li>📱 <strong>多渠道接入</strong> - 微信、Telegram、飞书、Discord、Slack...你选一个，它就在那儿回复你</li>
+<li>🗣️ <strong>语音交互</strong> - 可以说话，也可以让它说话</li>
+<li>🎨 <strong>Canvas 渲染</strong> - 能展示动态 UI，不只是文字</li>
+<li>🔌 <strong>无限扩展</strong> - 通过 Skills 添加各种技能</li>
+<li>🔒 <strong>数据本地</strong> - 你的数据留在你自己的服务器上</li>
+</ul>
+<p>官方 slogan 写得挺有意思：</p>
+<blockquote>
+<p><strong>OpenClaw is a personal AI assistant you run on your own devices.</strong></p>
 </blockquote>
 <hr>
-<h2>1. 整体架构概述</h2>
-<p>OpenClaw 采用 <strong>Gateway + Agent</strong> 的分布式架构：</p>
-<pre><code>┌─────────────────────────────────────────────────────────────────┐
-│                        Channels                            │
-│   (Feishu/Telegram/Discord/WhatsApp/Signal/...)       │
-└──────────────────────────────┬──────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        Gateway                             │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
-│   │   Router   │  │  Session   │  │   Auth Manager  │  │
-│   │   消息路由  │  │   会话管理   │  │    权限控制     │  │
-│   └─────────────┘  └─────────────┘  └─────────────────┘  │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
-│   │   Channel  │  │   Skills   │  │    Memory      │  │
-│   │   通道管理  │  │   技能系统  │  │     记忆系统    │  │
-│   └─────────────┘  └─────────────┘  └─────────────────┘  │
-└──────────────────────────────┬──────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                         Agent                              │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
-│   │  Provider  │  │   Tools    │  │   Prompts      │  │
-│   │   模型调用   │  │   工具调用   │  │     提示词      │  │
-│   └─────────────┘  └─────────────┘  └─────────────────┘  │
-└───────────────────────────────────────────────────────────┘
-</code></pre>
-<h3>1.1 核心组件职责</h3>
+<h1>为什么选择 OpenClaw？</h1>
+<p>先对比一下市面上的主流方案：</p>
 <table>
 <thead>
 <tr>
-<th>组件</th>
-<th>职责</th>
-<th>关键技术</th>
+<th>特性</th>
+<th>OpenClaw</th>
+<th>ChatGPT</th>
+<th>Claude</th>
+<th>Cursor</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Gateway</td>
-<td>消息路由、会话管理、权限控制</td>
-<td>WebSocket、OAuth、Session</td>
+<td>部署方式</td>
+<td>本地/私有</td>
+<td>OpenAI 云</td>
+<td>Anthropic 云</td>
+<td>本地</td>
 </tr>
 <tr>
-<td>Channel</td>
-<td>多渠道接入、消息协议转换</td>
-<td>Webhook、API SDK</td>
+<td>数据隐私</td>
+<td>✅ 完全本地</td>
+<td>❌ 上传云端</td>
+<td>❌ 上传云端</td>
+<td>✅ 本地</td>
 </tr>
 <tr>
-<td>Skills</td>
-<td>技能扩展、工具注册</td>
-<td>DI 容器、动态加载</td>
+<td>多渠道</td>
+<td>✅ 10+ 渠道</td>
+<td>❌ 仅官方</td>
+<td>❌ 仅官方</td>
+<td>❌ 仅 IDE</td>
 </tr>
 <tr>
-<td>Memory</td>
-<td>短期/长期记忆、向量存储</td>
-<td>LanceDB、文件系统</td>
+<td>可扩展性</td>
+<td>✅ 开源无限</td>
+<td>⚠️ GPTs 有限</td>
+<td>⚠️ 有限</td>
+<td>⚠️ IDE 插件</td>
 </tr>
 <tr>
-<td>Agent</td>
-<td>模型调用、工具选择、Prompt管理</td>
-<td>LLM API、Function Calling</td>
+<td>模型选择</td>
+<td>✅ 任意模型</td>
+<td>❌ 仅 OpenAI</td>
+<td>❌ 仅 Anthropic</td>
+<td>✅ 多种</td>
+</tr>
+<tr>
+<td>开源</td>
+<td>✅ 100%</td>
+<td>❌</td>
+<td>❌</td>
+<td>⚠️ 部分</td>
 </tr>
 </tbody></table>
+<h2>5 大核心优势</h2>
+<h3>1. 极致隐私 🔒</h3>
+<p>你的对话数据、文件、偏好设置，都留在你自己部署的服务器上。不依赖任何第三方云服务，数据完全可控。</p>
+<h3>2. 多渠道统一 📱</h3>
+<p>一个 AI 助手，同时管理多个渠道：</p>
+<ul>
+<li>微信/Telegram/飞书 回复你的技术问题</li>
+<li>Slack 发送网站监控告警</li>
+<li>Discord 回应群友的提问</li>
+</ul>
+<p>不用每次在不同平台重复配置，<strong>一次部署，处处可用</strong>。</p>
+<h3>3. 无限扩展 🔌</h3>
+<p>OpenClaw 采用 <strong>Skills</strong> 机制，你可以：</p>
+<ul>
+<li>安装社区 Skills（天气、提醒、知识库...）</li>
+<li>编写自己的 Skill（只需一个 <code>SKILL.md</code> 文件）</li>
+<li>让 AI 自动调用工具完成复杂任务</li>
+</ul>
+<h3>4. 长期记忆 🧠</h3>
+<p>不同于 ChatGPT 每次都是新对话，OpenClaw 支持：</p>
+<ul>
+<li><strong>短期记忆</strong>：当前会话上下文</li>
+<li><strong>长期记忆</strong>：向量存储，记住你之前说过什么</li>
+<li><strong>文件记忆</strong>：从文件系统读取上下文</li>
+</ul>
+<p>真正的&quot;记得住&quot;的 AI 助手。</p>
+<h3>5. 完全开源 📦</h3>
+<ul>
+<li>100% 开源（MIT 许可证）</li>
+<li>代码完全透明</li>
+<li>社区活跃（GitHub 10K+ Stars）</li>
+<li>可以自行审计安全性</li>
+</ul>
 <hr>
-<h2>2. Gateway 核心实现</h2>
-<h3>2.1 入口与初始化</h3>
-<pre><code class="language-typescript">// gateway/index.ts - Gateway 入口
-import { Gateway } from &#39;./gateway&#39;;
-import { SessionManager } from &#39;./session&#39;;
-import { ChannelManager } from &#39;./channels&#39;;
-
-export async function createGateway(config: GatewayConfig) {
-  const gateway = new Gateway(config);
-  
-  // 初始化各组件
-  await gateway.init();
-  
-  // 加载 Channels
-  await gateway.loadChannels(config.channels);
-  
-  // 加载 Skills
-  await gateway.loadSkills(config.skills);
-  
-  // 启动 HTTP/WebSocket 服务
-  await gateway.start(config.port);
-  
-  return gateway;
-}
-
-// 启动命令
-// openclaw gateway --port 18789 --verbose
-</code></pre>
-<h3>2.2 消息处理流程</h3>
-<pre><code class="language-typescript">// gateway/router.ts - 消息路由
-export class Router {
-  async handleMessage(channel: Channel, message: Message): Promise&lt;void&gt; {
-    // 1. 验证消息来源
-    if (!await this.authManager.verify(channel, message)) {
-      throw new AuthError(&#39;Unauthorized&#39;);
-    }
-
-    // 2. 获取或创建 Session
-    const session = await this.sessionManager.getOrCreate({
-      channel: channel.id,
-      user: message.from
-    });
-
-    // 3. 构建 Prompt
-    const prompt = await this.buildPrompt(session, message);
-
-    // 4. 调用 Agent
-    const response = await this.agent.complete(prompt);
-
-    // 5. 通过原 Channel 发送响应
-    await channel.send(message.from, response);
-  }
-
-  private async buildPrompt(session: Session, message: Message): Promise&lt;Prompt&gt; {
-    // 加载短期记忆（当前会话）
-    const shortMemory = session.messages;
+<h1>核心功能拆解</h1>
+<p>下面我们深入看看 OpenClaw 的架构，了解它是怎么工作的。</p>
+<h2>1. Gateway - 控制平面</h2>
+<p>Gateway 是整个系统的核心，负责：</p>
+<ul>
+<li>📬 <strong>消息路由</strong> - 接收来自各个 Channel 的消息，转发给 Agent</li>
+<li>👤 <strong>会话管理</strong> - 管理每个用户的对话状态</li>
+<li>🔐 <strong>权限控制</strong> - 谁可以访问，谁不能访问</li>
+<li>⚙️ <strong>配置管理</strong> - 统一管理所有组件配置</li>
+</ul>
+<pre><code class="language-typescript">// Gateway 核心逻辑简化版
+class Gateway {
+  async handleMessage(channel: string, user: string, message: string) {
+    // 1. 获取用户会话
+    const session = await sessionManager.getOrCreate({ channel, user });
     
-    // 加载长期记忆（向量检索）
-    const longMemory = await this.memory.search(
-      message.content,
-      { limit: 5 }
-    );
+    // 2. 构建 Prompt（包含记忆）
+    const prompt = await memory.buildPrompt(session, message);
     
-    // 构建完整 Prompt
-    return {
-      system: SYSTEM_PROMPT,
-      context: longMemory,
-      conversation: shortMemory,
-      user: message.content
-    };
+    // 3. 调用 AI 模型
+    const response = await agent.complete(prompt);
+    
+    // 4. 通过原渠道发送回复
+    await channel.send(user, response);
   }
 }
 </code></pre>
-<h3>2.3 Session 管理</h3>
-<pre><code class="language-typescript">// gateway/session.ts
-export class SessionManager {
-  private sessions = new Map&lt;string, Session&gt;();
-  
-  async getOrCreate(opts: SessionOptions): Promise&lt;Session&gt; {
-    const key = this.getKey(opts.channel, opts.user);
-    
-    if (!this.sessions.has(key)) {
-      this.sessions.set(key, new Session(opts));
-    }
-    
-    return this.sessions.get(key)!;
-  }
-
-  // Session 过期清理（定时任务）
-  async cleanup(): Promise&lt;void&gt; {
-    const now = Date.now();
-    for (const [key, session] of this.sessions) {
-      if (now - session.lastActive &gt; SESSION_TTL) {
-        // 持久化到长期记忆
-        await this.memory.save(session);
-        this.sessions.delete(key);
-      }
-    }
-  }
-}
-</code></pre>
-<hr>
-<h2>3. Channel 通道系统</h2>
-<h3>3.1 Channel 抽象</h3>
-<pre><code class="language-typescript">// channels/base.ts
-export abstract class Channel {
-  abstract readonly name: string;
-  abstract readonly capabilities: ChannelCapability[];
-  
+<h2>2. Channel - 消息通道</h2>
+<p>Channel 是 OpenClaw 与外部世界连接的桥梁。目前支持 10+ 种渠道：</p>
+<ul>
+<li>💬 <strong>即时通讯</strong>：微信、Telegram、Discord、Slack、Google Chat、Signal、iMessage</li>
+<li>🏢 <strong>企业协作</strong>：飞书、钉钉、Microsoft Teams</li>
+<li>🌐 <strong>去中心化</strong>：Matrix、BlueBubbles</li>
+</ul>
+<p>每个 Channel 都是一个独立的模块，通过统一接口接入：</p>
+<pre><code class="language-typescript">// Channel 抽象
+abstract class Channel {
   // 接收消息
-  abstract onMessage(handler: MessageHandler): void;
+  abstract onMessage(handler: (msg: Message) =&gt; Promise&lt;void&gt;): void;
   
   // 发送消息
-  abstract send(to: string, content: MessageContent): Promise&lt;void&gt;;
-  
-  // 消息格式转换
-  abstract parse(raw: any): Message;
-  abstract format(message: Message): any;
+  abstract send(to: string, content: Content): Promise&lt;void&gt;;
 }
 </code></pre>
-<h3>3.2 飞书 Channel 示例</h3>
-<pre><code class="language-typescript">// extensions/feishu/index.ts
-export class FeishuChannel extends Channel {
-  readonly name = &#39;feishu&#39;;
-  readonly capabilities = [&#39;text&#39;, &#39;image&#39;, &#39;card&#39;, &#39;interactive&#39;];
-  
-  private app: FeishuApp;
-  private webhook: string;
-  
-  constructor(config: FeishuConfig) {
-    super();
-    this.app = new FeishuApp(config.appId, config.appSecret);
-    this.webhook = config.webhook;
-  }
-  
-  // WebHook 接收消息
-  onMessage(handler: MessageHandler): void {
-    // 设置飞书 Events API WebSocket
-    this.app.on(&#39;message&#39;, async (event) =&gt; {
-      const message = this.parse(event);
-      const response = await handler(message);
-      await this.send(event.sender.user_id, response);
-    });
-  }
-  
-  // 发送消息（卡片消息）
-  async send(to: string, content: MessageContent): Promise&lt;void&gt; {
-    const card = this.buildCard(content);
-    await this.app.sendCard(to, card);
-  }
-  
-  // 构建飞书卡片消息
-  private buildCard(content: MessageContent): FeishuCard {
-    return {
-      header: {
-        title: { tag: &#39;plain_text&#39;, content: &#39;🤖 AI 助手&#39; },
-        template: &#39;blue&#39;
-      },
-      elements: [
-        {
-          tag: &#39;markdown&#39;,
-          content: content.text
-        },
-        {
-          tag: &#39;action&#39;,
-          actions: [
-            {
-              tag: &#39;button&#39;,
-              text: { tag: &#39;plain_text&#39;, content: &#39;复制&#39; },
-              type: &#39;primary&#39;
-            }
-          ]
-        }
-      ]
-    };
-  }
-}
+<p>以飞书为例，只需配置 App ID 和 Secret，就能接入：</p>
+<pre><code class="language-yaml"># 飞书配置示例
+feishu:
+  app_id: cli_xxxxx
+  app_secret: xxxxxxxxx
+  webhook: https://open.feishu.cn/xxx
 </code></pre>
-<hr>
-<h2>4. Skills 技能系统</h2>
-<h3>4.1 Skill 定义</h3>
-<pre><code class="language-typescript">// skills/base.ts
-export interface Skill {
-  readonly name: string;
-  readonly description: string;
-  readonly version: string;
-  
-  // 技能初始化
-  init(context: SkillContext): Promise&lt;void&gt;;
-  
-  // 注册工具
-  registerTools(): Tool[];
-  
-  // 处理消息
-  handle?(message: Message): Promise&lt;HandleResult&gt;;
-}
-</code></pre>
-<h3>4.2 Skill 示例：天气查询</h3>
-<pre><code class="language-typescript">// skills/weather/index.ts
-export class WeatherSkill implements Skill {
-  readonly name = &#39;weather&#39;;
-  readonly description = &#39;查询天气信息&#39;;
-  readonly version = &#39;1.0.0&#39;;
-  
-  private apiKey: string;
-  
-  constructor(config: WeatherConfig) {
-    this.apiKey = config.apiKey;
-  }
-  
-  async init(): Promise&lt;void&gt; {
-    console.log(&#39;Weather skill initialized&#39;);
-  }
-  
-  registerTools(): Tool[] {
-    return [
-      {
-        name: &#39;get_weather&#39;,
-        description: &#39;获取指定城市的天气信息&#39;,
-        parameters: {
-          type: &#39;object&#39;,
-          properties: {
-            city: {
-              type: &#39;string&#39;,
-              description: &#39;城市名称，如北京、上海&#39;
-            }
-          },
-          required: [&#39;city&#39;]
-        }
-      }
-    ];
-  }
-  
-  // 工具实现
-  async getWeather(city: string): Promise&lt;WeatherResult&gt; {
-    const response = await fetch(
-      `https://api.weather.com/v3/forecast?city=${city}&amp;key=${this.apiKey}`
-    );
-    return response.json();
-  }
-}
-</code></pre>
-<h3>4.3 Skill 加载机制</h3>
-<pre><code class="language-typescript">// gateway/skills.ts
-export class SkillManager {
-  private skills = new Map&lt;string, Skill&gt;();
-  
-  async loadSkills(skillDirs: string[]): Promise&lt;void&gt; {
-    for (const dir of skillDirs) {
-      // 动态加载 Skill
-      const skill = await this.importSkill(dir);
-      
-      // 初始化
-      await skill.init(this.createContext());
-      
-      // 注册工具到 Agent
-      const tools = skill.registerTools();
-      this.agent.registerTools(tools);
-      
-      this.skills.set(skill.name, skill);
-    }
-  }
-  
-  // 技能发现 - 从 node_modules 或本地目录加载
-  private async importSkill(path: string): Promise&lt;Skill&gt; {
-    const skillPath = resolve(path, &#39;index.js&#39;);
-    const module = await import(skillPath);
-    return module.default || module;
-  }
-}
-</code></pre>
-<hr>
-<h2>5. Memory 记忆系统</h2>
-<h3>5.1 多层记忆架构</h3>
-<pre><code class="language-typescript">// memory/manager.ts
-export class MemoryManager {
-  // 短期记忆：内存中的会话
-  private shortTerm = new ShortTermMemory();
-  
-  // 长期记忆：向量数据库
-  private longTerm = new LanceDBMemory();
-  
-  // 文件记忆：文件系统
-  private fileMemory = new FileMemory();
-  
-  async search(query: string, options: SearchOptions): Promise&lt;MemoryResult[]&gt; {
-    // 1. 向量检索
-    const vectorResults = await this.longTerm.search(query, {
-      limit: options.limit || 5
-    });
-    
-    // 2. 文件检索
-    const fileResults = await this.fileMemory.search(query);
-    
-    // 3. 合并结果
-    return this.mergeResults(vectorResults, fileResults);
-  }
-  
-  // 保存会话到长期记忆
-  async saveSession(session: Session): Promise&lt;void&gt; {
-    const embeddings = await this.embed(session.messages);
-    await this.longTerm.save({
-      id: session.id,
-      embeddings,
-      metadata: {
-        channel: session.channel,
-        user: session.user,
-        timestamp: Date.now()
-      }
-    });
-  }
-}
-</code></pre>
-<hr>
-<h2>6. Agent 与模型调用</h2>
-<h3>6.1 Provider 抽象</h3>
-<pre><code class="language-typescript">// agent/providers/base.ts
-export abstract class LLMProvider {
-  abstract readonly name: string;
-  
-  // 流式生成
-  abstract complete(prompt: Prompt): Promise&lt;LLMResponse&gt;;
-  
-  // 非流式生成
-  abstract *completeStream(prompt: Prompt): AsyncGenerator&lt;Chunk&gt;;
-  
-  // Function Calling
-  abstract completeWithFunctions(
-    prompt: Prompt,
-    functions: Tool[]
-  ): Promise&lt;FunctionCall&gt;;
-}
-</code></pre>
-<h3>6.2 Anthropic Provider 示例</h3>
-<pre><code class="language-typescript">// agent/providers/anthropic.ts
-export class AnthropicProvider extends LLMProvider {
-  readonly name = &#39;anthropic&#39;;
-  
-  private client: Anthropic;
-  
-  constructor(config: AnthropicConfig) {
-    super();
-    this.client = new Anthropic({
-      apiKey: config.apiKey
-    });
-  }
-  
-  async complete(prompt: Prompt): Promise&lt;LLMResponse&gt; {
-    const response = await this.client.messages.create({
-      model: &#39;claude-sonnet-4-20250514&#39;,
-      max_tokens: 4096,
-      system: prompt.system,
-      messages: [
-        ...prompt.context.map(c =&gt; ({
-          role: &#39;assistant&#39; as const,
-          content: c.content
-        })),
-        {
-          role: &#39;user&#39; as const,
-          content: prompt.user
-        }
-      ]
-    });
-    
-    return {
-      content: response.content[0].text,
-      usage: {
-        input: response.usage.input_tokens,
-        output: response.usage.output_tokens
-      }
-    };
-  }
-}
-</code></pre>
-<hr>
-<h2>7. 部署与配置</h2>
-<h3>7.1 Docker 部署</h3>
-<pre><code class="language-yaml"># docker-compose.yml
-version: &#39;3.8&#39;
-
-services:
-  openclaw:
-    image: openclaw/openclaw:latest
-    ports:
-      - &quot;18789:18789&quot;
-    environment:
-      - OPENCLAW_PROVIDER=anthropic
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - OPENCLAW_CHANNELS=feishu,telegram
-      - OPENCLAW_FEISHU_APP_ID=${FEISHU_APP_ID}
-      - OPENCLAW_FEISHU_APP_SECRET=${FEISHU_APP_SECRET}
-    volumes:
-      - ./data:/data
-      - ./skills:/app/skills
-    restart: unless-stopped
-
-  # 可选：向量数据库
-  lancedb:
-    image: lancedb/lancedb:latest
-    ports:
-      - &quot;8080:8080&quot;
-    volumes:
-      - ./lancedb:/data
-</code></pre>
-<h3>7.2 本地开发</h3>
-<pre><code class="language-bash"># 安装
-git clone https://github.com/openclaw/openclaw.git
-cd openclaw
-pnpm install
-
-# 构建
-pnpm build
-
-# 启动 Gateway
-pnpm gateway --port 18789 --verbose
-
-# 另一个终端：测试发送消息
-pnpm message send --to +1234567890 --message &quot;Hello&quot;
-</code></pre>
-<hr>
-<h2>8. 总结</h2>
-<p>OpenClaw 的架构设计体现了几个核心思想：</p>
-<ol>
-<li><strong>分层解耦</strong> - Gateway、Agent、Channel、Skills 各自独立，通过接口通信</li>
-<li><strong>可扩展</strong> - Skill 和 Channel 都是插件化设计，便于扩展</li>
-<li><strong>本地优先</strong> - 数据本地存储，尊重用户隐私</li>
-<li><strong>多渠道统一</strong> - 统一的消息抽象，屏蔽各渠道差异</li>
-</ol>
-<p>这种架构使得 OpenClaw 不仅仅是一个聊天工具，而是一个<strong>可定制的 AI Agent 平台</strong>。</p>
-<hr>
-<h2>📚 系列预告</h2>
+<h2>3. Skills - 技能系统</h2>
+<p>Skills 是 OpenClaw 的扩展机制。你可以把它理解为&quot;插件&quot;或&quot;技能包&quot;。</p>
+<h3>社区 Skills</h3>
+<p>官方和社区提供了一些开箱即用的 Skills：</p>
 <ul>
-<li><strong>第二篇</strong>：《OpenClaw Gateway 深度解析》</li>
-<li><strong>第三篇</strong>：《Channel 通道系统实现原理》</li>
-<li><strong>第四篇</strong>：《Skills 技能系统与工具调用》</li>
-<li><strong>第五篇</strong>：《Memory 记忆系统的设计与实现》</li>
+<li>🌤️ <strong>weather</strong> - 查询天气</li>
+<li>📝 <strong>xiaohongshu-generator</strong> - 生成小红书风格推文</li>
+<li>🔔 <strong>qqbot-cron</strong> - 定时提醒</li>
+<li>📅 <strong>calendar</strong> - 日历管理</li>
 </ul>
-<p>敬请期待！</p>
+<h3>自定义 Skill</h3>
+<p>自己写一个 Skill 也很简单，只需一个 <code>SKILL.md</code> 文件：</p>
+<pre><code class="language-markdown"># My Custom Skill
+
+## 功能
+帮我查天气
+
+## tools
+- get_weather: 查询城市天气
+</code></pre>
+<p>然后在配置中启用：</p>
+<pre><code class="language-yaml">skills:
+  - weather
+  - my-custom-skill
+</code></pre>
+<h2>4. Memory - 记忆系统</h2>
+<p>OpenClaw 的记忆系统分为三层：</p>
+<pre><code>┌─────────────────────────────────────┐
+│           短期记忆                    │
+│     (当前会话上下文，内存中)          │
+└─────────────────┬───────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────┐
+│           长期记忆                    │
+│    (向量数据库，持久化存储)          │
+└─────────────────┬───────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────┐
+│           文件记忆                    │
+│    (从文件系统读取上下文)            │
+└─────────────────────────────────────┘
+</code></pre>
+<pre><code class="language-typescript">// 记忆检索示例
+const results = await memory.search(&quot;你上次说的那个项目&quot;, {
+  limit: 5,        // 返回 5 条
+  threshold: 0.7   // 相似度阈值
+});
+</code></pre>
 <hr>
-<p><em>有问题欢迎评论区讨论。觉得有帮助请转发给需要的朋友。</em></p>
+<h1>快速上手</h1>
+<p>说了这么多，来点实际的。</p>
+<h2>安装</h2>
+<pre><code class="language-bash"># 1. 安装
+npm install -g openclaw@latest
+
+# 2. 初始化（交互式配置）
+openclaw onboard --install-daemon
+
+# 3. 启动 Gateway
+openclaw gateway --port 18789
+</code></pre>
+<h2>配置渠道（以飞书为例）</h2>
+<pre><code class="language-bash"># 添加飞书渠道
+openclaw channel add feishu
+</code></pre>
+<p>然后按提示配置：</p>
+<ol>
+<li>创建飞书应用：<a href="https://open.feishu.cn/">https://open.feishu.cn/</a></li>
+<li>获取 App ID 和 App Secret</li>
+<li>配置权限（消息、用户等）</li>
+<li>填入配置，完成！</li>
+</ol>
+<h2>测试</h2>
+<pre><code class="language-bash"># 发送测试消息
+openclaw message send --to 你的用户ID --message &quot;你好，我是你的 AI 助手&quot;
+</code></pre>
+<hr>
+<h1>总结</h1>
+<p>OpenClaw 可能不是最简单的 AI 助手，但它是<strong>最可控、最可扩展、最隐私</strong>的方案。</p>
+<p>如果你：</p>
+<ul>
+<li>✅ 重视数据隐私</li>
+<li>✅ 需要多渠道统一管理</li>
+<li>✅ 想深度定制 AI 行为</li>
+<li>✅ 对开源技术感兴趣</li>
+</ul>
+<p>不妨试试 OpenClaw。</p>
+<p>当然，如果你就想要一个&quot;打开就能用&quot;的聊天工具，ChatGPT/Claude 依然是最好的选择。</p>
+<p><strong>工具没有好坏，只有适不适合。</strong></p>
+<hr>
+<p><em>如果你觉得这篇文章有帮助，欢迎转发给需要的朋友。有问题评论区见。</em></p>
+<p><em>下篇预告：《OpenClaw 核心架构深度解析》，敬请期待。</em></p>
 
     </article>
 </body>
