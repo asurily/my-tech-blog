@@ -6,7 +6,7 @@
     <title>硬核拆解 OpenClaw：你的私人 AI 助手 - 阿蒲的技术空间</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.8; color: #333; max-width: 800px; margin: 0 auto; padding: 40px 20px; background: #f5f5f5; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.8; color: #333; max-width: 800px; margin: 0 auto; padding: 40px 20px; background: #f5f5f5; }
         article { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h1 { font-size: 1.8em; margin-bottom: 20px; color: #1a1a1a; }
         h2 { font-size: 1.4em; margin: 35px 0 18px; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; }
@@ -21,8 +21,10 @@
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: #3498db; color: white; }
         blockquote { border-left: 4px solid #3498db; padding-left: 18px; margin: 18px 0; color: #666; font-style: italic; }
-        .back { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; }
-        img { max-width: 100%; border-radius: 6px; margin: 15px 0; }
+        .meta { color: #888; font-size: 0.85em; margin-bottom: 25px; }
+        .back { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; font-weight: 500; }
+        .back:hover { text-decoration: underline; }
+        .highlight { background: #fff3cd; padding: 2px 6px; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -154,8 +156,8 @@
 <hr>
 <h1>核心功能拆解</h1>
 <p>下面我们深入看看 OpenClaw 的架构，了解它是怎么工作的。</p>
-<h2>1. Gateway - 控制平面</h2>
-<p>Gateway 是整个系统的核心，负责：</p>
+<h2>1. 网关 - 控制平面</h2>
+<p>网关是整个系统的核心，负责：</p>
 <ul>
 <li>📬 <strong>消息路由</strong> - 接收来自各个 Channel 的消息，转发给 Agent</li>
 <li>👤 <strong>会话管理</strong> - 管理每个用户的对话状态</li>
@@ -163,7 +165,7 @@
 <li>⚙️ <strong>配置管理</strong> - 统一管理所有组件配置</li>
 </ul>
 <pre><code class="language-typescript">// Gateway 核心逻辑简化版
-class Gateway {
+class 网关 {
   async handleMessage(channel: string, user: string, message: string) {
     // 1. 获取用户会话
     const session = await sessionManager.getOrCreate({ channel, user });
