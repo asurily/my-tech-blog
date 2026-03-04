@@ -1,14 +1,30 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>OpenClaw Memory 记忆系统 - 阿蒲的技术空间</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.8;color:#333;max-width:800px;margin:0 auto;padding:40px 20px;background:#f5f5f5;}article{background:white;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}h1{font-size:1.8em;margin-bottom:20px;}h2{font-size:1.4em;margin:35px 0 18px;color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:8px;}h3{font-size:1.15em;margin:22px 0 12px;}p{margin:14px 0;}ul,ol{margin:14px 0 14px 28px;}li{margin:7px 0;}pre{background:#2d2d2d;color:#f8f8f2;padding:18px;border-radius:6px;overflow-x:auto;margin:18px 0;font-size:0.9em;}code{background:#f4f4f4;padding:2px 6px;border-radius:3px;font-family:Consolas,monospace;font-size:0.9em;}table{width:100%;border-collapse:collapse;margin:18px 0;font-size:0.9em;}th,td{border:1px solid #ddd;padding:10px;text-align:left;}th{background:#3498db;color:white;}.back{display:inline-block;margin-bottom:20px;color:#3498db;text-decoration:none;}.ascii-art{background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:16px;overflow-x:auto;font-family:Consolas,Monaco,"Courier New",monospace;font-size:0.85em;line-height:1.4;color:#495057;white-space:pre;}</style></head><body><article><a href="/index.html" class="back">← 返回首页</a><h1>写在前面</h1>
-<blockquote>
-<p>有读者问：&quot;ChatGPT 每次都是全新对话，OpenClaw 怎么能&#39;记住&#39;之前说过的话？&quot;</p>
-<p>这篇就来讲讲 <strong>Memory 记忆系统</strong>，看看 OpenClaw 是如何实现短期、长期、文件三层记忆的。</p>
-</blockquote>
-<hr>
-<h1>一句话解释 Memory</h1>
-<p><strong>Memory</strong> = OpenClaw 的<strong>记忆系统</strong>，让 AI 能&quot;记住&quot;之前说过的话。</p>
-<hr>
-<h1>三层记忆架构</h1>
-<pre class="ascii-art">┌─────────────────────────────────────┐
+---
+title: OpenClaw Memory 记忆系统
+date: 2026-03-03
+tags:
+  - OpenClaw
+  - 记忆系统
+---
+
+[← 返回首页](/index.html)# 写在前面
+
+> 
+有读者问："ChatGPT 每次都是全新对话，OpenClaw 怎么能'记住'之前说过的话？"
+
+这篇就来讲讲 **Memory 记忆系统**，看看 OpenClaw 是如何实现短期、长期、文件三层记忆的。
+
+---
+
+# 一句话解释 Memory
+
+**Memory** = OpenClaw 的**记忆系统**，让 AI 能"记住"之前说过的话。
+
+---
+
+# 三层记忆架构
+
+```
+┌─────────────────────────────────────┐
 │           短期记忆                    │
 │     (当前会话上下文，内存中)          │
 │     session.messages                │
@@ -30,16 +46,21 @@
 │    workspace/*.md                   │
 │    TOOLS.md, MEMORY.md 等          │
 └─────────────────────────────────────┘
-</pre>
-<hr>
-<h1>短期记忆</h1>
-<h2>1. 会话消息存储</h2>
-<pre><code class="language-typescript">class ShortTermMemory {
+```
+
+---
+
+# 短期记忆
+
+## 1. 会话消息存储
+
+```
+class ShortTermMemory {
   private messages: Message[] = [];
   private maxMessages: number = 100;
 
   // 添加消息
-  add(role: &#39;user&#39; | &#39;assistant&#39; | &#39;system&#39;, content: string): void {
+  add(role: 'user' | 'assistant' | 'system', content: string): void {
     this.messages.push({
       role,
       content,
@@ -47,7 +68,7 @@
     });
 
     // 超过上限，删除最老的
-    if (this.messages.length &gt; this.maxMessages) {
+    if (this.messages.length > this.maxMessages) {
       this.messages.shift();
     }
   }
@@ -62,9 +83,12 @@
     this.messages = [];
   }
 }
-</code></pre>
-<h2>2. 会话管理</h2>
-<pre><code class="language-typescript">class Session {
+```
+
+## 2. 会话管理
+
+```
+class Session {
   readonly id: string;
   readonly channel: string;
   readonly user: string;
@@ -81,41 +105,46 @@
 
   // 添加用户消息
   addUserMessage(content: string): void {
-    this.memory.add(&#39;user&#39;, content);
+    this.memory.add('user', content);
     this.lastActive = Date.now();
   }
 
   // 添加 AI 回复
   addAssistantMessage(content: string): void {
-    this.memory.add(&#39;assistant&#39;, content);
+    this.memory.add('assistant', content);
     this.lastActive = Date.now();
   }
 }
-</code></pre>
-<hr>
-<h1>长期记忆</h1>
-<h2>1. 向量存储</h2>
-<pre><code class="language-typescript">class LongTermMemory {
+```
+
+---
+
+# 长期记忆
+
+## 1. 向量存储
+
+```
+class LongTermMemory {
   private db: LanceDB;
   private embedding: EmbeddingModel;
 
-  async init(config: MemoryConfig): Promise&lt;void&gt; {
+  async init(config: MemoryConfig): Promise<void> {
     this.db = await LanceDB.load(config.path);
     this.embedding = new EmbeddingModel(config.embeddingModel);
   }
 
   // 保存到记忆
-  async save(session: Session): Promise&lt;void&gt; {
+  async save(session: Session): Promise<void> {
     // 1. 会话消息转为文本
     const text = session.memory.getRecent(20)
-      .map(m =&gt; `${m.role}: ${m.content}`)
-      .join(&#39;\n&#39;);
+      .map(m => `${m.role}: ${m.content}`)
+      .join('\n');
 
     // 2. 生成向量
     const vector = await this.embedding.embed(text);
 
     // 3. 写入数据库
-    await this.db.insert(&#39;memories&#39;, {
+    await this.db.insert('memories', {
       id: session.id,
       user: session.user,
       channel: session.channel,
@@ -126,21 +155,21 @@
   }
 
   // 搜索记忆
-  async search(query: string, options: SearchOptions = {}): Promise&lt;MemoryResult[]&gt; {
+  async search(query: string, options: SearchOptions = {}): Promise<MemoryResult[]> {
     const { limit = 5, threshold = 0.7 } = options;
 
     // 1. 查询文本转向量
     const queryVector = await this.embedding.embed(query);
 
     // 2. 向量相似度搜索
-    const results = await this.db.query(&#39;memories&#39;, {
+    const results = await this.db.query('memories', {
       vector: queryVector,
       k: limit,
       threshold
     });
 
     // 3. 返回结果
-    return results.map(r =&gt; ({
+    return results.map(r => ({
       id: r.id,
       text: r.text,
       score: r.score,
@@ -148,18 +177,21 @@
     }));
   }
 }
-</code></pre>
-<h2>2. Embedding 模型</h2>
-<pre><code class="language-typescript">interface EmbeddingModel {
-  embed(text: string): Promise&lt;number[]&gt;;
+```
+
+## 2. Embedding 模型
+
+```
+interface EmbeddingModel {
+  embed(text: string): Promise<number[]>;
 }
 
 class OpenAIEmbedding implements EmbeddingModel {
   private client: OpenAI;
 
-  async embed(text: string): Promise&lt;number[]&gt; {
+  async embed(text: string): Promise<number[]> {
     const response = await this.client.embeddings.create({
-      model: &#39;text-embedding-3-small&#39;,
+      model: 'text-embedding-3-small',
       input: text
     });
 
@@ -171,31 +203,36 @@ class AnthropicEmbedding implements EmbeddingModel {
   // Anthropic 没有官方 Embedding API
   // 可使用第三方或本地模型
 }
-</code></pre>
-<hr>
-<h1>文件记忆</h1>
-<h2>1. 文件加载</h2>
-<pre><code class="language-typescript">class FileMemory {
+```
+
+---
+
+# 文件记忆
+
+## 1. 文件加载
+
+```
+class FileMemory {
   private paths: string[] = [];
-  private cache = new Map&lt;string, string&gt;();
+  private cache = new Map<string, string>();
 
   constructor(paths: string[]) {
     this.paths = paths;
   }
 
   // 加载所有文件
-  async load(): Promise&lt;void&gt; {
+  async load(): Promise<void> {
     for (const path of this.paths) {
       const files = await glob(`${path}/**/*.md`);
       for (const file of files) {
-        const content = await fs.readFile(file, &#39;utf-8&#39;);
+        const content = await fs.readFile(file, 'utf-8');
         this.cache.set(file, content);
       }
     }
   }
 
   // 搜索文件内容
-  async search(query: string): Promise&lt;FileResult[]&gt; {
+  async search(query: string): Promise<FileResult[]> {
     const results: FileResult[] = [];
 
     for (const [file, content] of this.cache) {
@@ -215,59 +252,55 @@ class AnthropicEmbedding implements EmbeddingModel {
 
   private extractSnippets(content: string, query: string): string[] {
     const snippets: string[] = [];
-    const lines = content.split(&#39;\n&#39;);
+    const lines = content.split('\n');
 
-    for (let i = 0; i &lt; lines.length; i++) {
+    for (let i = 0; i < lines.length; i++) {
       if (lines[i].toLowerCase().includes(query.toLowerCase())) {
         // 提取前后 3 行
         const start = Math.max(0, i - 3);
         const end = Math.min(lines.length, i + 4);
-        snippets.push(lines.slice(start, end).join(&#39;\n&#39;));
+        snippets.push(lines.slice(start, end).join('\n'));
       }
     }
 
     return snippets;
   }
 }
-</code></pre>
-<h2>2. 常用文件</h2>
-<p>OpenClaw 会自动加载以下文件作为上下文：</p>
-<table>
-<thead>
-<tr>
-<th>文件</th>
-<th>用途</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>SOUL.md</code></td>
-<td>AI 人设、性格</td>
-</tr>
-<tr>
-<td><code>USER.md</code></td>
-<td>用户偏好、背景</td>
-</tr>
-<tr>
-<td><code>MEMORY.md</code></td>
-<td>长期记忆、重要事件</td>
-</tr>
-<tr>
-<td><code>TOOLS.md</code></td>
-<td>工具配置、API 密钥</td>
-</tr>
-<tr>
-<td><code>AGENTS.md</code></td>
-<td>工作目录规范</td>
-</tr>
-<tr>
-<td><code>memory/YYYY-MM-DD.md</code></td>
-<td>每日记录</td>
-</tr>
-</tbody></table>
-<hr>
-<h1>Memory Manager</h1>
-<h2>1. 统一接口</h2>
-<pre><code class="language-typescript">class MemoryManager {
+```
+
+## 2. 常用文件
+
+OpenClaw 会自动加载以下文件作为上下文：
+
+|文件
+|用途
+
+|`SOUL.md`
+|AI 人设、性格
+
+|`USER.md`
+|用户偏好、背景
+
+|`MEMORY.md`
+|长期记忆、重要事件
+
+|`TOOLS.md`
+|工具配置、API 密钥
+
+|`AGENTS.md`
+|工作目录规范
+
+|`memory/YYYY-MM-DD.md`
+|每日记录
+
+---
+
+# Memory Manager
+
+## 1. 统一接口
+
+```
+class MemoryManager {
   private shortTerm = new ShortTermMemory();
   private longTerm: LongTermMemory;
   private fileMemory: FileMemory;
@@ -282,14 +315,14 @@ class AnthropicEmbedding implements EmbeddingModel {
   }
 
   // 搜索记忆
-  async search(query: string, options: SearchOptions = {}): Promise&lt;SearchResult[]&gt; {
+  async search(query: string, options: SearchOptions = {}): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
 
     // 1. 长期记忆搜索
     if (this.longTerm) {
       const longResults = await this.longTerm.search(query, options);
-      results.push(...longResults.map(r =&gt; ({
-        type: &#39;long_term&#39; as const,
+      results.push(...longResults.map(r => ({
+        type: 'long_term' as const,
         ...r
       })));
     }
@@ -297,33 +330,36 @@ class AnthropicEmbedding implements EmbeddingModel {
     // 2. 文件记忆搜索
     if (this.fileMemory) {
       const fileResults = await this.fileMemory.search(query);
-      results.push(...fileResults.map(r =&gt; ({
-        type: &#39;file&#39; as const,
+      results.push(...fileResults.map(r => ({
+        type: 'file' as const,
         ...r
       })));
     }
 
     // 3. 按相关性排序
-    return results.sort((a, b) =&gt; b.score - a.score);
+    return results.sort((a, b) => b.score - a.score);
   }
 
   // 保存会话
-  async saveSession(session: Session): Promise&lt;void&gt; {
+  async saveSession(session: Session): Promise<void> {
     // 添加到短期记忆
-    session.memory.getRecent(100).forEach(m =&gt; {
+    session.memory.getRecent(100).forEach(m => {
       this.shortTerm.add(m.role as any, m.content);
     });
 
     // 定期写入长期记忆
-    if (this.longTerm &amp;&amp; shouldSaveToLongTerm(session)) {
+    if (this.longTerm && shouldSaveToLongTerm(session)) {
       await this.longTerm.save(session);
     }
   }
 }
-</code></pre>
-<h2>2. 构建 Prompt</h2>
-<pre><code class="language-typescript">class PromptBuilder {
-  async build(session: Session, message: string): Promise&lt;Prompt&gt; {
+```
+
+## 2. 构建 Prompt
+
+```
+class PromptBuilder {
+  async build(session: Session, message: string): Promise<Prompt> {
     // 1. 短期记忆
     const recentMessages = session.memory.getRecent(20);
 
@@ -337,13 +373,13 @@ class AnthropicEmbedding implements EmbeddingModel {
     return {
       system: this.getSystemPrompt(),
       context: [
-        ...longMemory.map(m =&gt; ({
-          role: &#39;system&#39; as const,
+        ...longMemory.map(m => ({
+          role: 'system' as const,
           content: `[记忆] ${m.text}`
         })),
-        ...fileMemory.map(f =&gt; ({
-          role: &#39;system&#39; as const,
-          content: `[文件: ${f.file}]\n${f.snippets.join(&#39;\n\n&#39;)}`
+        ...fileMemory.map(f => ({
+          role: 'system' as const,
+          content: `[文件: ${f.file}]\n${f.snippets.join('\n\n')}`
         }))
       ],
       conversation: recentMessages,
@@ -351,10 +387,14 @@ class AnthropicEmbedding implements EmbeddingModel {
     };
   }
 }
-</code></pre>
-<hr>
-<h1>配置示例</h1>
-<pre><code class="language-yaml">memory:
+```
+
+---
+
+# 配置示例
+
+```
+memory:
   # 短期记忆
   short_term:
     enabled: true
@@ -375,19 +415,26 @@ class AnthropicEmbedding implements EmbeddingModel {
       - ./workspace
       - ./memory
     ignore:
-      - &quot;*.git/*&quot;
-      - &quot;node_modules/*&quot;
-</code></pre>
-<hr>
-<h1>总结</h1>
-<p>Memory 系统核心思想：</p>
-<ol>
-<li><strong>分层存储</strong> - 短期→长期→文件，层层递进</li>
-<li><strong>向量搜索</strong> - 语义匹配，不只是关键词</li>
-<li><strong>自动加载</strong> - 特定文件自动作为上下文</li>
-<li><strong>按需读取</strong> - 只加载相关的记忆</li>
-</ol>
-<p>这就是 OpenClaw 能&quot;记住你之前说过什么&quot;的秘诀。</p>
-<hr>
-<p><em>系列预告：后续还有《Agent 与模型调用》《部署与运维》《最佳实践》等，敬请期待！</em></p>
-</article></body></html>
+      - "*.git/*"
+      - "node_modules/*"
+```
+
+---
+
+# 总结
+
+Memory 系统核心思想：
+
+- **分层存储** - 短期→长期→文件，层层递进
+
+- **向量搜索** - 语义匹配，不只是关键词
+
+- **自动加载** - 特定文件自动作为上下文
+
+- **按需读取** - 只加载相关的记忆
+
+这就是 OpenClaw 能"记住你之前说过什么"的秘诀。
+
+---
+
+*系列预告：后续还有《Agent 与模型调用》《部署与运维》《最佳实践》等，敬请期待！*

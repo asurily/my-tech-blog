@@ -1,15 +1,32 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>OpenClaw 网关核心原理 - 阿蒲的技术空间</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.8;color:#333;max-width:800px;margin:0 auto;padding:40px 20px;background:#f5f5f5;}article{background:white;padding:40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}h1{font-size:1.8em;margin-bottom:20px;}h2{font-size:1.4em;margin:35px 0 18px;color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:8px;}h3{font-size:1.15em;margin:22px 0 12px;}p{margin:14px 0;}ul,ol{margin:14px 0 14px 28px;}li{margin:7px 0;}pre{background:#2d2d2d;color:#f8f8f2;padding:18px;border-radius:6px;overflow-x:auto;margin:18px 0;font-size:0.9em;}code{background:#f4f4f4;padding:2px 6px;border-radius:3px;font-family:Consolas,monospace;font-size:0.9em;}table{width:100%;border-collapse:collapse;margin:18px 0;font-size:0.9em;}th,td{border:1px solid #ddd;padding:10px;text-align:left;}th{background:#3498db;color:white;}blockquote{border-left:4px solid #3498db;padding-left:18px;margin:18px 0;color:#666;font-style:italic;}.back{display:inline-block;margin-bottom:20px;color:#3498db;text-decoration:none;}.ascii-art{background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:16px;overflow-x:auto;font-family:Consolas,Monaco,"Courier New",monospace;font-size:0.85em;line-height:1.4;color:#495057;white-space:pre;}</style></head><body><article><a href="/index.html" class="back">← 返回首页</a><h1>写在前面</h1>
-<blockquote>
-<p>上一篇文章我们拆解了 OpenClaw 的整体架构，提到了 Gateway（网关）是整个系统的&quot;大脑和心脏&quot;。但具体它是怎么工作的？消息从哪个渠道进来，又是怎么路由到正确的 Agent 的？权限是怎么控制的？</p>
-<p>这篇文章，我就带大家深入 Gateway 的内部，完整拆解消息路由、会话管理、权限控制三大核心模块。</p>
-</blockquote>
-<hr>
-<h1>一句话解释网关</h1>
-<p><strong>Gateway（网关）</strong> = <strong>消息路由器 + 会话管理器 + 权限控制器 + 技能调度中心</strong></p>
-<p>它是 OpenClaw 的核心枢纽，负责协调所有组件的协作。</p>
-<hr>
-<h1>核心架构图</h1>
-<pre class="ascii-art">┌─────────────────────────────────────────────────────────────────┐
+---
+title: OpenClaw 网关核心原理
+date: 2026-03-03
+tags:
+  - OpenClaw
+  - 网关
+---
+
+[← 返回首页](/index.html)# 写在前面
+
+> 
+上一篇文章我们拆解了 OpenClaw 的整体架构，提到了 Gateway（网关）是整个系统的"大脑和心脏"。但具体它是怎么工作的？消息从哪个渠道进来，又是怎么路由到正确的 Agent 的？权限是怎么控制的？
+
+这篇文章，我就带大家深入 Gateway 的内部，完整拆解消息路由、会话管理、权限控制三大核心模块。
+
+---
+
+# 一句话解释网关
+
+**Gateway（网关）** = **消息路由器 + 会话管理器 + 权限控制器 + 技能调度中心**
+
+它是 OpenClaw 的核心枢纽，负责协调所有组件的协作。
+
+---
+
+# 核心架构图
+
+```
+┌─────────────────────────────────────────────────────────────────┐
 │                        Gateway                                │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │
 │   │   Router   │  │  Session   │  │   Auth Manager  │   │
@@ -26,34 +43,34 @@
 │                      WebSocket / HTTP                         │
 │              openclaw gateway --port 18789                   │
 └─────────────────────────────────────────────────────────────────┘
-</pre>
-<hr>
-<h1>4 大核心模块</h1>
-<h2>4.1 消息路由 - Router</h2>
-<p><strong>消息路由是 Gateway 的第一道关卡</strong>，决定了一条消息从哪里来、到哪里去。</p>
-<h3>核心职责</h3>
-<table>
-<thead>
-<tr>
-<th>功能</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>消息解析</td>
-<td>将各渠道的原始消息转换为统一格式</td>
-</tr>
-<tr>
-<td>路由匹配</td>
-<td>根据消息来源和内容决定处理方式</td>
-</tr>
-<tr>
-<td>格式转换</td>
-<td>将响应转换为目标渠道的格式</td>
-</tr>
-</tbody></table>
-<h3>路由流程</h3>
-<pre class="ascii-art">用户发送消息
+```
+
+---
+
+# 4 大核心模块
+
+## 4.1 消息路由 - Router
+
+**消息路由是 Gateway 的第一道关卡**，决定了一条消息从哪里来、到哪里去。
+
+### 核心职责
+
+|功能
+|说明
+
+|消息解析
+|将各渠道的原始消息转换为统一格式
+
+|路由匹配
+|根据消息来源和内容决定处理方式
+
+|格式转换
+|将响应转换为目标渠道的格式
+
+### 路由流程
+
+```
+用户发送消息
     │
     ▼
 ┌─────────────────┐
@@ -74,11 +91,14 @@
 ┌─────────────────┐
 │   Agent         │  转发给 AI 处理
 └─────────────────┘
-</pre>
-<h3>核心代码</h3>
-<pre><code class="language-typescript">// 消息路由器
+```
+
+### 核心代码
+
+```
+// 消息路由器
 class Router {
-  private channels = new Map&lt;string, Channel&gt;();
+  private channels = new Map<string, Channel>();
   private sessionManager: SessionManager;
 
   // 注册渠道
@@ -87,7 +107,7 @@ class Router {
   }
 
   // 处理入口
-  async handleMessage(raw: RawMessage): Promise&lt;void&gt; {
+  async handleMessage(raw: RawMessage): Promise<void> {
     // 1. 解析消息
     const message = this.parse(raw);
 
@@ -96,7 +116,7 @@ class Router {
 
     // 3. 权限验证
     if (!await this.authManager.check(message.from)) {
-      throw new AuthError(&#39;未授权用户&#39;);
+      throw new AuthError('未授权用户');
     }
 
     // 4. 获取会话
@@ -110,20 +130,23 @@ class Router {
   private deriveSessionKey(message: Message): string {
     const { channel, chatType, peerId } = message;
 
-    if (chatType === &#39;direct&#39;) {
-      // DM: agent:&lt;agentId&gt;:&lt;channel&gt;:dm:&lt;peerId&gt;
+    if (chatType === 'direct') {
+      // DM: agent:<agentId>:<channel>:dm:<peerId>
       return `agent:main:${channel}:dm:${peerId}`;
-    } else if (chatType === &#39;group&#39;) {
-      // 群聊: agent:&lt;agentId&gt;:&lt;channel&gt;:group:&lt;groupId&gt;
+    } else if (chatType === 'group') {
+      // 群聊: agent:<agentId>:<channel>:group:<groupId>
       return `agent:main:${channel}:group:${message.groupId}`;
     }
 
     return `agent:main:${channel}:${peerId}`;
   }
 }
-</code></pre>
-<h3>路由配置示例</h3>
-<pre><code class="language-yaml"># openclaw.yaml
+```
+
+### 路由配置示例
+
+```
+# openclaw.yaml
 gateway:
   router:
     # 默认Agent
@@ -141,74 +164,82 @@ gateway:
       autoCreate: true
       # 群聊消息是否进入主会话
       collapseToMain: false
-</code></pre>
-<hr>
-<h2>4.2 会话管理 - Session Manager</h2>
-<p><strong>会话管理是 OpenClaw 的记忆核心</strong>，负责维护每个对话的上下文状态。</p>
-<h3>三层会话结构</h3>
-<table>
-<thead>
-<tr>
-<th>层级</th>
-<th>存储</th>
-<th>生命周期</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>内存会话</td>
-<td>RAM</td>
-<td>当前连接期间</td>
-</tr>
-<tr>
-<td>文件会话</td>
-<td>JSONL</td>
-<td>长期保存</td>
-</tr>
-<tr>
-<td>压缩会话</td>
-<td>SQLite</td>
-<td>自动合并</td>
-</tr>
-</tbody></table>
-<h3>会话Key规则</h3>
-<pre><code># 直接消息 (DM)
-agent:&lt;agentId&gt;:main                    # 默认：所有DM共享
-agent:&lt;agentId&gt;:&lt;channel&gt;:dm:&lt;peerId&gt;   # per-peer：按用户隔离
-agent:&lt;agentId&gt;:&lt;channel&gt;:dm:&lt;peerId&gt;   # per-channel-peer：按渠道+用户隔离
+```
+
+---
+
+## 4.2 会话管理 - Session Manager
+
+**会话管理是 OpenClaw 的记忆核心**，负责维护每个对话的上下文状态。
+
+### 三层会话结构
+
+|层级
+|存储
+|生命周期
+
+|内存会话
+|RAM
+|当前连接期间
+
+|文件会话
+|JSONL
+|长期保存
+
+|压缩会话
+|SQLite
+|自动合并
+
+### 会话Key规则
+
+```
+# 直接消息 (DM)
+agent:<agentId>:main                    # 默认：所有DM共享
+agent:<agentId>:<channel>:dm:<peerId>   # per-peer：按用户隔离
+agent:<agentId>:<channel>:dm:<peerId>   # per-channel-peer：按渠道+用户隔离
 
 # 群聊
-agent:&lt;agentId&gt;:&lt;channel&gt;:group:&lt;groupId&gt;
+agent:<agentId>:<channel>:group:<groupId>
 
 # 特殊场景
-cron:&lt;job.id&gt;                           # 定时任务
-hook:&lt;uuid&gt;                             # Webhook
-</code></pre>
-<h3>安全 DM 模式</h3>
-<blockquote>
-<p>⚠️ <strong>重要安全建议</strong>：如果你的 Agent 可以接收多个人的 DM，务必启用安全 DM 模式！</p>
-</blockquote>
-<pre><code class="language-json5">{
+cron:<job.id>                           # 定时任务
+hook:<uuid>                             # Webhook
+```
+
+### 安全 DM 模式
+
+> 
+⚠️ **重要安全建议**：如果你的 Agent 可以接收多个人的 DM，务必启用安全 DM 模式！
+
+```
+{
   session: {
     // 安全模式：按渠道+用户隔离会话
-    dmScope: &quot;per-channel-peer&quot;
+    dmScope: "per-channel-peer"
   }
 }
-</code></pre>
-<p><strong>为什么要这样做？</strong></p>
-<ul>
-<li>默认情况下，所有 DM 共享同一个会话上下文</li>
-<li>Alice 问了你一个私人问题</li>
-<li>Bob 问&quot;我们刚才聊了什么？&quot;</li>
-<li>如果共享会话，模型可能用 Alice 的上下文回答 Bob！</li>
-</ul>
-<h3>核心代码</h3>
-<pre><code class="language-typescript">// 会话管理器
+```
+
+**为什么要这样做？**
+
+- 默认情况下，所有 DM 共享同一个会话上下文
+
+- Alice 问了你一个私人问题
+
+- Bob 问"我们刚才聊了什么？"
+
+- 如果共享会话，模型可能用 Alice 的上下文回答 Bob！
+
+### 核心代码
+
+```
+// 会话管理器
 class SessionManager {
-  private sessions = new Map&lt;string, Session&gt;();
+  private sessions = new Map<string, Session>();
   private storePath: string;
 
   // 获取或创建会话
-  async getOrCreate(key: SessionKey): Promise&lt;Session&gt; {
+  async getOrCreate(key: SessionKey): Promise<Session> {
     // 1. 尝试从内存获取
     let session = this.sessions.get(key);
     if (session) {
@@ -229,7 +260,7 @@ class SessionManager {
   }
 
   // 添加消息到会话
-  async addMessage(key: SessionKey, message: Message): Promise&lt;void&gt; {
+  async addMessage(key: SessionKey, message: Message): Promise<void> {
     const session = await this.getOrCreate(key);
     
     // 添加到内存
@@ -245,7 +276,7 @@ class SessionManager {
   }
 
   // 会话压缩
-  async compact(session: Session): Promise&lt;void&gt; {
+  async compact(session: Session): Promise<void> {
     // 1. 提取系统级重要信息
     const summary = await this.summarize(session.messages);
     
@@ -256,7 +287,7 @@ class SessionManager {
     const compacted = new Session({
       ...session,
       messages: [
-        { role: &#39;system&#39;, content: `会话摘要: ${summary}` },
+        { role: 'system', content: `会话摘要: ${summary}` },
         ...recent
       ]
     });
@@ -265,47 +296,49 @@ class SessionManager {
     await this.save(session.key, compacted);
   }
 }
-</code></pre>
-<h3>会话存储</h3>
-<pre><code class="language-yaml"># 存储路径
-# ~/.openclaw/agents/&lt;agentId&gt;/sessions/
+```
+
+### 会话存储
+
+```
+# 存储路径
+# ~/.openclaw/agents/<agentId>/sessions/
 
 # 会话索引
 sessions.json
 
 # 会话记录 (JSONL)
-&lt;SessionId&gt;.jsonl
-</code></pre>
-<hr>
-<h2>4.3 权限控制 - Auth Manager</h2>
-<p><strong>权限控制是 Gateway 的安全大门</strong>，确保只有授权用户才能使用 Agent。</p>
-<h3>权限模型</h3>
-<table>
-<thead>
-<tr>
-<th>层级</th>
-<th>控制粒度</th>
-<th>配置方式</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>全局</td>
-<td>整个 Gateway</td>
-<td><code>gateway.auth.token</code></td>
-</tr>
-<tr>
-<td>渠道</td>
-<td>单个渠道</td>
-<td><code>channels.&lt;name&gt;.allowedUsers</code></td>
-</tr>
-<tr>
-<td>Agent</td>
-<td>单个 Agent</td>
-<td><code>agents.&lt;name&gt;.allowedUsers</code></td>
-</tr>
-</tbody></table>
-<h3>支持的认证方式</h3>
-<pre class="ascii-art">┌─────────────────────────────────────┐
+<SessionId>.jsonl
+```
+
+---
+
+## 4.3 权限控制 - Auth Manager
+
+**权限控制是 Gateway 的安全大门**，确保只有授权用户才能使用 Agent。
+
+### 权限模型
+
+|层级
+|控制粒度
+|配置方式
+
+|全局
+|整个 Gateway
+|`gateway.auth.token`
+
+|渠道
+|单个渠道
+|`channels.<name>.allowedUsers`
+
+|Agent
+|单个 Agent
+|`agents.<name>.allowedUsers`
+
+### 支持的认证方式
+
+```
+┌─────────────────────────────────────┐
 │           认证方式                    │
 ├─────────────────────────────────────┤
 │ 1. Token 认证                        │
@@ -324,18 +357,21 @@ sessions.json
 │    - session.groupDenyList           │
 │    - 特定群聊可被屏蔽               │
 └─────────────────────────────────────┘
-</pre>
-<h3>核心代码</h3>
-<pre><code class="language-typescript">// 权限管理器
+```
+
+### 核心代码
+
+```
+// 权限管理器
 class AuthManager {
   private config: AuthConfig;
 
   // 验证用户权限
-  async verify(user: UserContext): Promise&lt;AuthResult&gt; {
+  async verify(user: UserContext): Promise<AuthResult> {
     // 1. 全局 Token 验证
     if (this.config.token) {
       if (user.token !== this.config.token) {
-        return { allowed: false, reason: &#39;invalid_token&#39; };
+        return { allowed: false, reason: 'invalid_token' };
       }
     }
 
@@ -343,15 +379,15 @@ class AuthManager {
     if (this.config.allowList?.enabled) {
       const isAllowed = this.config.allowList.users.includes(user.id);
       if (!isAllowed) {
-        return { allowed: false, reason: &#39;not_in_allowlist&#39; };
+        return { allowed: false, reason: 'not_in_allowlist' };
       }
     }
 
     // 3. 群聊黑名单验证
-    if (user.chatType === &#39;group&#39;) {
+    if (user.chatType === 'group') {
       const isDenied = this.config.denyList?.groups.includes(user.groupId);
       if (isDenied) {
-        return { allowed: false, reason: &#39;in_denylist&#39; };
+        return { allowed: false, reason: 'in_denylist' };
       }
     }
 
@@ -361,17 +397,20 @@ class AuthManager {
   // 获取用户权限级别
   getPermissionLevel(user: UserContext): PermissionLevel {
     if (this.config.admins?.includes(user.id)) {
-      return &#39;admin&#39;;
+      return 'admin';
     }
     if (this.config.powerUsers?.includes(user.id)) {
-      return &#39;power&#39;;
+      return 'power';
     }
-    return &#39;user&#39;;
+    return 'user';
   }
 }
-</code></pre>
-<h3>配置示例</h3>
-<pre><code class="language-yaml"># openclaw.yaml
+```
+
+### 配置示例
+
+```
+# openclaw.yaml
 gateway:
   auth:
     # 方式1: Token 认证
@@ -392,17 +431,24 @@ session:
   groupDenyList:
     - group_id_1
     - group_id_2
-</code></pre>
-<h3>权限命令</h3>
-<pre><code class="language-bash"># 检查安全设置
+```
+
+### 权限命令
+
+```
+# 检查安全设置
 openclaw security audit
 
 # 查看当前权限配置
 openclaw gateway status
-</code></pre>
-<hr>
-<h1>消息流转完整流程</h1>
-<pre class="ascii-art">                    用户发送消息
+```
+
+---
+
+# 消息流转完整流程
+
+```
+                    用户发送消息
                          │
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
@@ -462,11 +508,16 @@ openclaw gateway status
                              │
                              ▼
                     用户收到回复
-</pre>
-<hr>
-<h1>实战：配置网关</h1>
-<h2>步骤 1: 启动网关</h2>
-<pre><code class="language-bash"># 基本启动
+```
+
+---
+
+# 实战：配置网关
+
+## 步骤 1: 启动网关
+
+```
+# 基本启动
 openclaw gateway --port 18789
 
 # 调试模式 (查看详细日志)
@@ -477,34 +528,43 @@ openclaw gateway --port 18789 --force
 
 # 开发模式 (热重载)
 pnpm gateway:watch
-</code></pre>
-<h2>步骤 2: 配置权限</h2>
-<pre><code class="language-yaml"># ~/.openclaw/openclaw.json
+```
+
+## 步骤 2: 配置权限
+
+```
+# ~/.openclaw/openclaw.json
 {
-  &quot;gateway&quot;: {
-    &quot;auth&quot;: {
-      &quot;token&quot;: &quot;your-secret-token&quot;
+  "gateway": {
+    "auth": {
+      "token": "your-secret-token"
     }
   },
-  &quot;session&quot;: {
-    &quot;allowList&quot;: {
-      &quot;enabled&quot;: true,
-      &quot;users&quot;: [&quot;user_123&quot;, &quot;user_456&quot;]
+  "session": {
+    "allowList": {
+      "enabled": true,
+      "users": ["user_123", "user_456"]
     }
   }
 }
-</code></pre>
-<h2>步骤 3: 配置会话策略</h2>
-<pre><code class="language-yaml"># DM 会话隔离策略
+```
+
+## 步骤 3: 配置会话策略
+
+```
+# DM 会话隔离策略
 session:
   # 选项: main / per-peer / per-channel-peer
-  dmScope: &quot;per-channel-peer&quot;
+  dmScope: "per-channel-peer"
   
   # 主会话 Key
-  mainKey: &quot;main&quot;
-</code></pre>
-<h2>步骤 4: 验证配置</h2>
-<pre><code class="language-bash"># 检查网关状态
+  mainKey: "main"
+```
+
+## 步骤 4: 验证配置
+
+```
+# 检查网关状态
 openclaw gateway status
 
 # 安全审计
@@ -512,65 +572,63 @@ openclaw security audit
 
 # 查看健康状态
 openclaw health --json
-</code></pre>
-<hr>
-<h1>对比：不同网关方案的差异</h1>
-<table>
-<thead>
-<tr>
-<th>特性</th>
-<th>OpenClaw Gateway</th>
-<th>自建方案</th>
-<th>商业方案</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>多渠道支持</td>
-<td>开箱即用</td>
-<td>需自行开发</td>
-<td>需付费</td>
-</tr>
-<tr>
-<td>本地部署</td>
-<td>✅</td>
-<td>✅</td>
-<td>❌</td>
-</tr>
-<tr>
-<td>会话管理</td>
-<td>自动压缩/记忆</td>
-<td>需自行实现</td>
-<td>部分支持</td>
-</tr>
-<tr>
-<td>权限控制</td>
-<td>白名单/黑名单</td>
-<td>需自行实现</td>
-<td>部分支持</td>
-</tr>
-<tr>
-<td>成本</td>
-<td>开源免费</td>
-<td>人力成本</td>
-<td>订阅费用</td>
-</tr>
-<tr>
-<td>扩展性</td>
-<td>插件化</td>
-<td>完全可控</td>
-<td>受限</td>
-</tr>
-</tbody></table>
-<hr>
-<h1>总结</h1>
-<p>网关是 OpenClaw 的核心枢纽，承担了四大职责：</p>
-<ol>
-<li><strong>消息路由</strong> - 统一处理多渠道消息</li>
-<li><strong>会话管理</strong> - 维护对话上下文，支持自动压缩</li>
-<li><strong>权限控制</strong> - Token/白名单/黑名单多层保护</li>
-<li><strong>技能调度</strong> - 协调 Skills 和 Agent 的交互</li>
-</ol>
-<p>通过这篇文章，你应该对 Gateway 的内部工作原理有了全面了解。下一篇文章我们将深入 <strong>Channel 通道系统</strong>，看看 OpenClaw 是如何支持这么多即时通讯平台的。</p>
-<hr>
-<p><em>下篇预告：《Channel 通道系统 - 多渠道接入原理与飞书/Telegram 示例》，敬请期待。</em></p>
-</article></body></html>
+```
+
+---
+
+# 对比：不同网关方案的差异
+
+|特性
+|OpenClaw Gateway
+|自建方案
+|商业方案
+
+|多渠道支持
+|开箱即用
+|需自行开发
+|需付费
+
+|本地部署
+|✅
+|✅
+|❌
+
+|会话管理
+|自动压缩/记忆
+|需自行实现
+|部分支持
+
+|权限控制
+|白名单/黑名单
+|需自行实现
+|部分支持
+
+|成本
+|开源免费
+|人力成本
+|订阅费用
+
+|扩展性
+|插件化
+|完全可控
+|受限
+
+---
+
+# 总结
+
+网关是 OpenClaw 的核心枢纽，承担了四大职责：
+
+- **消息路由** - 统一处理多渠道消息
+
+- **会话管理** - 维护对话上下文，支持自动压缩
+
+- **权限控制** - Token/白名单/黑名单多层保护
+
+- **技能调度** - 协调 Skills 和 Agent 的交互
+
+通过这篇文章，你应该对 Gateway 的内部工作原理有了全面了解。下一篇文章我们将深入 **Channel 通道系统**，看看 OpenClaw 是如何支持这么多即时通讯平台的。
+
+---
+
+*下篇预告：《Channel 通道系统 - 多渠道接入原理与飞书/Telegram 示例》，敬请期待。*
