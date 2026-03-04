@@ -6,30 +6,35 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       
       - name: Setup Node
+        run: |
+          node_version=20
+          echo "node_version=$node_version" >> $GITHUB_ENV
+      
+      - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+      
+      - name: Install Hexo
+        run: |
+          npm install -g hexo-cli
       
       - name: Install Dependencies
         run: |
           npm install
       
-      - name: Build Hexo
+      - name: Generate
         run: |
-          npx hexo generate
+          hexo generate
       
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-          force_orphan: true
